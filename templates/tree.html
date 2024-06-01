@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Tree</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+    color: #333;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+svg {
+    display: block;
+    margin: 0 auto;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: #fff;
+    stroke: steelblue;
+    stroke-width: 3px;
+}
+
+.node text {
+    font: 12px sans-serif;
+}
+
+.link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 2px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    text-align: center;
+    margin-top: 20px;
+}
+
+ul li {
+    display: inline;
+    margin: 0 10px;
+}
+
+ul li a {
+    text-decoration: none;
+    color: #007BFF;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+ul li a:hover {
+    color: #0056b3;
+}
+
+    </style>
+</head>
+<body>
+    <svg width="960" height="600"></svg>
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script>
+        // Insert the JSON data here or fetch it from your server
+        fetch('/package_hierarchy/{{ data.package_id }}/{{ data.current_user_id }}')  // Replace with the actual package_id and root_user_id
+            .then(response => response.json())
+            .then(data => {
+                const treeData = data;
+                // The rest of the code for setting up the D3.js tree remains the same
+                // Set the dimensions and margins of the diagram
+                const margin = {top: 20, right: 120, bottom: 20, left: 120},
+                    width = 960 - margin.right - margin.left,
+                    height = 600 - margin.top - margin.bottom;
+
+                const svg = d3.select("svg")
+                    .attr("width", width + margin.right + margin.left)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                const treemap = d3.tree().size([height, width]);
+
+                let nodes = d3.hierarchy(treeData, d => d.children);
+
+                nodes = treemap(nodes);
+
+                const link = svg.selectAll(".link")
+                    .data(nodes.descendants().slice(1))
+                    .enter().append("path")
+                    .attr("class", "link")
+                    .attr("d", d => {
+                        return "M" + d.y + "," + d.x
+                            + "C" + (d.y + d.parent.y) / 2 + "," + d.x
+                            + " " + (d.y + d.parent.y) / 2 + "," + d.parent.x
+                            + " " + d.parent.y + "," + d.parent.x;
+                    });
+
+                const node = svg.selectAll(".node")
+                    .data(nodes.descendants())
+                    .enter().append("g")
+                    .attr("class", d => "node" + (d.children ? " node--internal" : " node--leaf"))
+                    .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
+
+                node.append("circle")
+                    .attr("r", 10);
+
+                node.append("text")
+                    .attr("dy", ".35em")
+                    .attr("x", d => d.children ? -13 : 13)
+                    .style("text-anchor", d => d.children ? "end" : "start")
+                    .text(d => d.data.name);
+            });
+
+
+        
+    </script>
+    <ul>
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('send_picture') }}">Send Picture</a></li>
+        <li><a href="{{ url_for('send_message') }}">Send Message</a></li>
+        <li><a href="{{ url_for('send_message_main') }}">Send Message Main</a></li>
+        <li><a href="{{ url_for('my_image_packages') }}">My Image Packages</a></li>
+        <li><a href="{{ url_for('grant_access') }}">Grant Sharing Access</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+</body>
+</html>

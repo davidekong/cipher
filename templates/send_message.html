@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Message</title>
+</head>
+<body>
+    <h1>Send Message</h1>
+    <form id="messageForm" method="POST" action="{{ url_for('send_message') }}">
+        <div>
+            <label for="recipient_username">Recipient Username:</label>
+            <input type="text" id="recipient_username" name="recipient_username" required>
+        </div>
+        <div>
+            <label for="text">Message:</label>
+            <textarea id="text" name="text" required></textarea>
+        </div>
+        <div>
+            <button type="submit">Send</button>
+        </div>
+    </form>
+
+    <h2>Messages Received</h2>
+    <ul id="messageList">
+        {% for sent_at, sender, text in messages %}
+            <li>
+                <strong>{{ sender }}</strong> at {{ sent_at }}: {{ text }}
+            </li>
+        {% endfor %}
+    </ul>
+    <ul id="messageList2">
+    </ul>
+
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+    <script>
+        // Connect to Socket.IO server
+        const socket = io({autoConnect: false});
+        socket.connect();
+
+        // Listen for 'sent' event
+        socket.on('sent', function(data) {
+            var messageList = document.getElementById('messageList2');
+            var listItem = document.createElement('li');
+            listItem.innerHTML = '<strong>' + data.sender + '</strong> at ' + data.sent_at + ': ' + data.text;
+            messageList.appendChild(listItem);
+        });
+
+        // Clear the message list on page reload
+        window.onload = function() {
+            var messageList = document.getElementById('messageList2');
+            messageList.innerHTML = ''; // Clear the list
+        };
+    </script>
+</body>
+</html>

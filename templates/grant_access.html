@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packages</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='grant_access.css') }}">
+</head>
+<body>
+    <h1>Packages</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Sender</th>
+                <th>Receiver</th>
+                <th>Send Time</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for package in packages %}
+            <tr>
+                <td>{{ package.sender }}</td>
+                <td>{{ package.recipient }}</td>
+                <td>{{ package.sent_at }}</td>
+                <td>
+                    {% if not package.has_access %}
+                    <form method="POST" action="{{ url_for('grant_access') }}">
+                        <input type="hidden" name="package_id" value="{{ package.id }}">
+                        <button type="submit">Accept</button>
+                    </form>
+                    {% else %}
+                    Access Granted
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <ul>
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('send_picture') }}">Send Picture</a></li>
+        <li><a href="{{ url_for('send_message') }}">Send Message</a></li>
+        <li><a href="{{ url_for('send_message_main') }}">Send Message Main</a></li>
+        <li><a href="{{ url_for('my_image_packages') }}">My Image Packages</a></li>
+        <li><a href="{{ url_for('grant_access') }}">Grant Sharing Access</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+</body>
+</html>
