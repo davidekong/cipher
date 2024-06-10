@@ -37,6 +37,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
+friends = db.Table('friends',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('friend_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
+)
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -50,12 +55,34 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
+    friends = db.relationship(
+        'User',
+        secondary=friends,
+        primaryjoin=id==friends.c.user_id,
+        secondaryjoin=id==friends.c.friend_id,
+        backref='friend_of'
+    )
 
-    # def set_password(self, password):
-    #     self.password = generate_password_hash(password)
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
     
-    # def check_password(self, password):
-    #     return check_password_hash(self.password, password)
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+    
+    def add_friend(self, user):
+        if user not in self.friends:
+            self.friends.append(user)
+        if self not in user.friends:
+            user.friends.append(self)
+
+    def remove_friend(self, user):
+        if user in self.friends:
+            self.friends.remove(user)
+        if self in user.friends:
+            user.friends.remove(self)
+
+    def is_friend(self, user):
+        return user in self.friends
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
@@ -117,7 +144,51 @@ class LoginForm(FlaskForm):
     
     
 
+with app.app_context():
+    db.drop_all()
+    db.create_all()
 
+    for i in range(1, 11):  # u1 to u10
+        user = User(
+            username=f"u{i}",
+            email=f"u{i}@mail.com"
+        )
+        user.set_password("test")
+        db.session.add(user)
+
+    db.session.commit()
+
+    print("✅ Users created successfully!")
+    users = User.query.all()
+    for user in users:
+        print(user)
+        
+    u1 = User.query.filter_by(username='u1').first()
+    u2 = User.query.filter_by(username='u2').first()
+    u3 = User.query.filter_by(username='u3').first()
+    u4 = User.query.filter_by(username='u4').first()
+    u5 = User.query.filter_by(username='u5').first()
+
+    # Make friends
+    u1.add_friend(u2)
+    u1.add_friend(u3)
+
+    u2.add_friend(u4)
+
+    u3.add_friend(u4)
+    u3.add_friend(u5)
+
+    db.session.commit()
+
+    # Display friendships
+    def show_friends(user):
+        print(f"{user.username}'s friends: {[f.username for f in user.friends]}")
+
+    show_friends(u1)
+    show_friends(u2)
+    show_friends(u3)
+    show_friends(u4)
+    show_friends(u5)
     
     
 @app.route("/register", methods=['GET', 'POST'])
@@ -172,19 +243,16 @@ def send_picture():
             return redirect(request.url)
         if file:
             recipient_username = request.form['recipient_username']
-            
             recipient = User.query.filter_by(username=recipient_username).first()
-            
             if not recipient:
                 flash('Recipient not found.', 'error')
                 return redirect(url_for('send_picture'))
-            
+
             filename = secure_filename(file.filename)
             image = Image(filename=filename, data=file.read())
             db.session.add(image)
             db.session.commit()
-            
-            
+
             package = Package(
                 owner_id=current_user.id,
                 sender_id=current_user.id,
@@ -194,14 +262,18 @@ def send_picture():
                 sent_at=datetime.utcnow(),
                 has_access=True
             )
-            
+
             db.session.add(package)
             db.session.commit()
             return redirect(url_for('send_picture'))
 
+    # Fetch packages and current user's friends
     packages = Package.query.filter_by(recipient_id=current_user.id, has_access=True, package_type='image').all()
     images = [(pkg.sent_at, pkg.sender.username, Image.query.get(pkg.content_id)) for pkg in packages]
-    return render_template('send_picture.html', images=images)
+    friends = current_user.friends  # 💥 Get the friends
+
+    return render_template('send_picture.html', images=images, friends=friends)
+
 
 
 @app.route('/image/<int:image_id>')

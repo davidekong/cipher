@@ -9,9 +9,15 @@
   <h1>Upload Image</h1>
   <form method="post" enctype="multipart/form-data" action="{{ url_for('send_picture') }}">
     <div>
-      <label for="recipient_username">Recipient Username:</label>
-      <input type="text" id="recipient_username" name="recipient_username" required>
+      <label for="recipient_username">Select Friend:</label>
+      <select id="recipient_username" name="recipient_username" required>
+        <option value="" disabled selected>Select a friend</option>
+        {% for friend in friends %}
+          <option value="{{ friend.username }}">{{ friend.username }}</option>
+        {% endfor %}
+      </select>
     </div>
+    
     <input type="file" name="file">
     <input type="submit" value="Upload">
   </form>
