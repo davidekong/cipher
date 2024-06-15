@@ -22,22 +22,14 @@
     <input type="submit" value="Upload">
   </form>
   <h2>Uploaded Images</h2>
-  <div>
-    {% for sent_at, sender, image in images %}
-    <div style="margin: 20px; display: inline-block;">
-      <a href="{{ url_for('show_image', image_id=image.id) }}">{{ image.filename }}</a>
-      <p>Sent by: {{ sender }} at {{ sent_at }}</p>
-      <a href="{{ url_for('share_image', image_id=image.id) }}">Share Image</a>
-    </div>
-    {% endfor %}
-  </div>
   <ul>
     <li><a href="{{ url_for('home') }}">Home</a></li>
     <li><a href="{{ url_for('send_picture') }}">Send Picture</a></li>
     <li><a href="{{ url_for('my_image_packages') }}">My Image Packages</a></li>
+    <li><a href="{{ url_for('outbox') }}">Outbox</a></li>
     <li><a href="{{ url_for('grant_access') }}">Grant Sharing Access</a></li>
     <li><a href="{{ url_for('logout') }}">Logout</a></li>
-  </ul>
+</ul>
   
 </body>
 </html>

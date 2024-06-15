@@ -294,6 +294,30 @@ def show_image(image_id):
     
     return render_template('show_image.html', data=data)
 
+
+@app.route('/outbox', methods=['GET', 'POST'])
+@login_required
+def outbox():
+    user = current_user
+    packages = Package.query.filter_by(owner_id=user.id, package_type="image").all()
+    image_details = []
+    content_ids_checked = []
+    for package in packages:
+        image = Image.query.get(package.content_id)
+        if package.content_id in content_ids_checked:
+            continue
+        content_ids_checked.append(package.content_id)
+        image_details.append({
+            'package_id': package.id,
+            'filename': image.filename,
+            'sent_at': package.sent_at,
+            'sender': package.sender.username,
+            'recipient': package.recipient.username,
+            'content_id': package.content_id,
+            'current_user': current_user,
+        })
+    return render_template('outbox.html', image_details=image_details)
+
 @app.route('/share_image/<int:image_id>', methods=['GET', 'POST'])
 @login_required
 def share_image(image_id):
@@ -328,7 +352,7 @@ def share_image(image_id):
 @login_required
 def my_image_packages():
     user_id = current_user.id  # Assuming `g.user` is set to the current user
-    image_packages = Package.query.filter_by(owner_id=user_id, package_type='image').all()
+    image_packages = Package.query.filter_by(recipient_id=user_id, package_type='image').all()
     image_details = []
     content_ids_checked = []
     for package in image_packages:

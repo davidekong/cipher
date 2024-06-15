@@ -7,25 +7,25 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='my_image_packages.css') }}">
 </head>
 <body>
-    <h1>My Image Packages</h1>
+    <h1>My Outbox</h1>
     <table class="package-table">
         <thead>
             <tr>
                 <th>Package ID</th>
                 <th>Filename</th>
                 <th>Sent At</th>
-                <th>Sender</th>
                 <th>Recipient</th>
+                <th>Track</th>
             </tr>
         </thead>
         <tbody>
-            {% for detail in image_details %}
+            {% for image in image_details %}
                 <tr>
-                    <td>{{ detail.package_id }}</td>
-                    <td><a href="{{ url_for('show_image', image_id=detail.content_id) }}">{{ detail.filename }}</a></td>
-                    <td>{{ detail.sent_at }}</td>
-                    <td>{{ detail.sender }}</td>
-                    <td>{{ detail.recipient }}</td>
+                    <td>{{ image.package_id }}</td>
+                    <td><a href="{{ url_for('show_image', image_id=image.content_id) }}">{{ image.filename }}</a></td>
+                    <td>{{ image.sent_at }}</td>
+                    <td>{{ image.recipient }}</td>
+                    <td><a href="{{ url_for('tree', package_id=image.package_id) }}">Track this Upload</a></td>
                 </tr>
             {% endfor %}
         </tbody>
