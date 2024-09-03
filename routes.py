@@ -47,6 +47,27 @@ def logout():
 def home():
     return render_template('home.html')
 
+@main_blueprint.route('/add_friend', methods=['GET', 'POST'])
+def add_friend():
+    if request.method == 'POST':
+        username_or_email = request.form['username_or_email']
+
+        if username_or_email:
+            friend = User.query.filter((User.username == username_or_email) | (User.email == username_or_email)).first()
+            if friend and current_user.is_friend(friend) is False:
+                # Check if the user is not already a friend
+                print(f"Adding friend: {friend.username}")
+                current_user.add_friend(friend)
+                db.session.commit()
+                flash(f'You have added {friend.username} as a friend!', 'success')
+                return redirect(url_for('main.add_friend', user_id=current_user.id))
+            else:
+                print(f"Friend not found or already a friend: {username_or_email}")
+                flash('Friend not found or already a friend.', 'error')
+
+    return render_template('add_friend.html')
+
+
 @main_blueprint.route('/send_picture', methods=['GET', 'POST'])
 @login_required
 def send_picture():
@@ -101,17 +122,61 @@ def show_image(image_id):
         'image': image,
         'current_user': current_user
     }
-    return render_template('show_image.html', **data)
+    
+    return render_template('show_image.html', data=data)
 
 @main_blueprint.route('/outbox', methods=['GET', 'POST'])
 @login_required
 def outbox():
-    return render_template('outbox.html')
+    user = current_user
+    packages = Package.query.filter_by(owner_id=user.id, package_type="image").all()
+    image_details = []
+    content_ids_checked = []
+    for package in packages:
+        image = Image.query.get(package.content_id)
+        if package.content_id in content_ids_checked:
+            continue
+        content_ids_checked.append(package.content_id)
+        image_details.append({
+            'package_id': package.id,
+            'filename': image.filename,
+            'sent_at': package.sent_at,
+            'sender': package.sender.username,
+            'recipient': package.recipient.username,
+            'content_id': package.content_id,
+            'current_user': current_user,
+        })
+    return render_template('outbox.html', image_details=image_details)
 
 @main_blueprint.route('/share_image/<int:image_id>', methods=['GET', 'POST'])
 @login_required
 def share_image(image_id):
-     return render_template('share_image.html')
+    image = Image.query.get(image_id)
+    if request.method == 'POST':
+        recipient_username = request.form['recipient_username']
+            
+        recipient = User.query.filter_by(username=recipient_username).first()
+        
+        if not recipient:
+            flash('Recipient not found.', 'error')
+            return redirect(url_for('send_picture'))
+        
+        initial_package = Package.query.filter_by(content_id=image_id, package_type='image').first()
+        owner_id = initial_package.owner_id
+        package = Package(
+            owner_id=owner_id,
+            sender_id=current_user.id,
+            recipient_id=recipient.id,
+            package_type='image',
+            content_id=image.id,
+            sent_at=datetime.utcnow(),
+            has_access=False
+        )
+        
+        db.session.add(package)
+        db.session.commit()
+        return redirect(url_for('send_picture'))
+    return render_template('share_image.html', image=image)
  
  
 @main_blueprint.route('/my_image_packages')

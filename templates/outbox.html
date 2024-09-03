@@ -22,10 +22,10 @@
             {% for image in image_details %}
                 <tr>
                     <td>{{ image.package_id }}</td>
-                    <td><a href="{{ url_for('show_image', image_id=image.content_id) }}">{{ image.filename }}</a></td>
+                    <td><a href="{{ url_for('main.show_image', image_id=image.content_id) }}">{{ image.filename }}</a></td>
                     <td>{{ image.sent_at }}</td>
                     <td>{{ image.recipient }}</td>
-                    <td><a href="{{ url_for('tree', package_id=image.package_id) }}">Track this Upload</a></td>
+                    <td><a href="{{ url_for('main.tree', package_id=image.package_id) }}">Track this Upload</a></td>
                 </tr>
             {% endfor %}
         </tbody>

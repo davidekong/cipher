@@ -22,7 +22,7 @@
             {% for detail in image_details %}
                 <tr>
                     <td>{{ detail.package_id }}</td>
-                    <td><a href="{{ url_for('show_image', image_id=detail.content_id) }}">{{ detail.filename }}</a></td>
+                    <td><a href="{{ url_for('main.show_image', image_id=detail.content_id) }}">{{ detail.filename }}</a></td>
                     <td>{{ detail.sent_at }}</td>
                     <td>{{ detail.sender }}</td>
                     <td>{{ detail.recipient }}</td>

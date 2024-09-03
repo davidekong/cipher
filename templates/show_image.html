@@ -22,7 +22,7 @@
   <!-- Import the page's JavaScript to do some stuff -->
   <script src="{{ url_for('static', filename='vid.js') }}"></script>
   <h1>{{ data.image.filename }}</h1>
-  <img id="imageToBlur" src="{{ url_for('get_image', image_id=data.image.id) }}" alt="{{ data.image.name }}" style="max-width: 800px;">
+  <img id="imageToBlur" src="{{ url_for('main.get_image', image_id=data.image.id) }}" alt="{{ data.image.name }}" style="max-width: 800px;">
   <p>Uploaded by: {{ data.current_user.username }}</p>
   <ul>
     <li><a href="{{ url_for('main.home') }}">Home</a></li>
