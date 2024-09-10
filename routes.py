@@ -8,11 +8,14 @@ from io import BytesIO
 from datetime import datetime
 from utils import get_package_hierarchy
 
+# Define the main blueprint for routes
 main_blueprint = Blueprint('main', __name__)
 
 def show_friends(user):
+    # Debug helper to print user's friends
     print(f"{user.username}'s friends: {[f.username for f in user.friends]}")
 
+# User registration route
 @main_blueprint.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
@@ -25,6 +28,7 @@ def register():
         return redirect(url_for('main.login'))
     return render_template('register.html', title='Register', form=form)
 
+# User login route
 @main_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -37,25 +41,29 @@ def login():
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
+# User logout route
 @main_blueprint.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for('main.login'))
 
+# Home page (requires login)
 @main_blueprint.route('/')
 @login_required
 def home():
     return render_template('home.html')
 
+# Add a friend route
 @main_blueprint.route('/add_friend', methods=['GET', 'POST'])
 def add_friend():
     if request.method == 'POST':
         username_or_email = request.form['username_or_email']
 
         if username_or_email:
+            # Find user by username or email
             friend = User.query.filter((User.username == username_or_email) | (User.email == username_or_email)).first()
             if friend and current_user.is_friend(friend) is False:
-                # Check if the user is not already a friend
+                # Add as friend if not already friends
                 print(f"Adding friend: {friend.username}")
                 current_user.add_friend(friend)
                 db.session.commit()
@@ -67,7 +75,7 @@ def add_friend():
 
     return render_template('add_friend.html')
 
-
+# Send picture route
 @main_blueprint.route('/send_picture', methods=['GET', 'POST'])
 @login_required
 def send_picture():
@@ -89,6 +97,7 @@ def send_picture():
             db.session.add(image)
             db.session.commit()
 
+            # Create a package for the sent image
             package = Package(
                 owner_id=current_user.id,
                 sender_id=current_user.id,
@@ -101,19 +110,21 @@ def send_picture():
             db.session.add(package)
             db.session.commit()
 
-    # Fetch packages and current user's friends
+    # Fetch packages and current user's friends for display
     packages = Package.query.filter_by(recipient_id=current_user.id, has_access=True, package_type='image').all()
     images = [(pkg.sent_at, pkg.sender.username, Image.query.get(pkg.content_id)) for pkg in packages]
-    friends = current_user.friends  # 💥 Get the friends
+    friends = current_user.friends  # Get the friends
 
     return render_template('send_picture.html', images=images, friends=friends)
 
+# Route to serve image files
 @main_blueprint.route('/image/<int:image_id>')
 @login_required
 def get_image(image_id):
     image = Image.query.get(image_id)
     return send_file(BytesIO(image.data), mimetype='image/jpeg')
 
+# Route to show a single image
 @main_blueprint.route('/show_image/<int:image_id>')
 @login_required
 def show_image(image_id):
@@ -125,6 +136,7 @@ def show_image(image_id):
     
     return render_template('show_image.html', data=data)
 
+# Outbox route to show sent images
 @main_blueprint.route('/outbox', methods=['GET', 'POST'])
 @login_required
 def outbox():
@@ -148,6 +160,7 @@ def outbox():
         })
     return render_template('outbox.html', image_details=image_details)
 
+# Share image with another user
 @main_blueprint.route('/share_image/<int:image_id>', methods=['GET', 'POST'])
 @login_required
 def share_image(image_id):
@@ -179,6 +192,7 @@ def share_image(image_id):
     return render_template('share_image.html', image=image)
  
  
+# Show all image packages received by the user
 @main_blueprint.route('/my_image_packages')
 @login_required
 def my_image_packages():
@@ -202,7 +216,7 @@ def my_image_packages():
         })
     return render_template('my_image_packages.html', image_details=image_details)
 
-
+# Grant access to shared images
 @main_blueprint.route('/grant_access', methods=['GET', 'POST'])
 @login_required
 def grant_access():
@@ -217,14 +231,14 @@ def grant_access():
     
     return render_template('grant_access.html', packages=packages)
 
-
+# API endpoint for package hierarchy (used by D3.js tree)
 @main_blueprint.route('/package_hierarchy/<int:package_id>/<int:root_user_id>', methods=['GET'])
 @login_required
 def package_hierarchy(package_id, root_user_id):
     hierarchy = get_package_hierarchy(package_id, root_user_id)
     return jsonify(hierarchy)
 
-
+# Tree visualization page
 @main_blueprint.route('/tree/<int:package_id>')
 @login_required
 def tree(package_id):
@@ -233,3 +247,20 @@ def tree(package_id):
         "current_user_id": current_user.id
     }
     return render_template('tree.html', data=data)
+
+# Remove a friend route
+@main_blueprint.route('/remove_friend', methods=['GET', 'POST'])
+@login_required
+def remove_friend():
+    if request.method == 'POST':
+        friend_username = request.form.get('friend_username')
+        if friend_username:
+            friend = User.query.filter_by(username=friend_username).first()
+            if friend and current_user.is_friend(friend):
+                current_user.remove_friend(friend)
+                db.session.commit()
+                flash(f'Removed {friend.username} from your friends.', 'success')
+                return redirect(url_for('main.remove_friend'))
+            else:
+                flash('Friend not found or not in your friends list.', 'error')
+    return render_template('remove_friend.html')

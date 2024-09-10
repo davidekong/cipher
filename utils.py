@@ -2,15 +2,18 @@
 from models import User, Package
 
 def show_friends(user):
+    # Print the user's friends to the console (for debugging)
     print(f"{user.username}'s friends: {[f.username for f in user.friends]}")
 
 def get_package_hierarchy(package_id, root_user_id):
+    # Build a hierarchy tree for a package's sharing history
     root_user = User.query.get(root_user_id)
     hierarchy = {'name': root_user.username, 'children': []}
     root_package = Package.query.filter_by(id=package_id).first()
     image_id = root_package.content_id
 
     def build_hierarchy(user_id):
+        # Recursively build children for the hierarchy
         children = []
         packages = Package.query.filter_by(content_id=image_id, sender_id=user_id).all()
         for package in packages:

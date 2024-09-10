@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Remove Friend</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='send_picture.css') }}">
+</head>
+<body>
+    <h1>Remove a Friend</h1>
+    <form method="post" action="{{ url_for('main.remove_friend') }}">
+        <div>
+            <label for="friend_username">Select Friend to Remove:</label>
+            <select id="friend_username" name="friend_username" required>
+                <option value="" disabled selected>Select a friend</option>
+                {% for friend in current_user.friends %}
+                    <option value="{{ friend.username }}">{{ friend.username }} ({{ friend.email }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <input type="submit" value="Remove Friend">
+    </form>
+
+    <h2>Your Friends</h2>
+    <ul>
+        {% if current_user.friends %}
+            {% for friend in current_user.friends %}
+                <li>{{ friend.username }} ({{ friend.email }})</li>
+            {% endfor %}
+        {% else %}
+            <li>You have no friends added yet.</li>
+        {% endif %}
+    </ul>
+
+    <ul>
+        <li><a href="{{ url_for('main.home') }}">Home</a></li>
+        <li><a href="{{ url_for('main.send_picture') }}">Send Picture</a></li>
+        <li><a href="{{ url_for('main.my_image_packages') }}">My Image Packages</a></li>
+        <li><a href="{{ url_for('main.outbox') }}">Outbox</a></li>
+        <li><a href="{{ url_for('main.grant_access') }}">Grant Sharing Access</a></li>
+        <li><a href="{{ url_for('main.add_friend') }}">Add Friend</a></li>
+        <li><a href="{{ url_for('main.remove_friend') }}">Remove Friend</a></li>
+        <li><a href="{{ url_for('main.logout') }}">Logout</a></li>
+    </ul>
+</body>
+</html>
