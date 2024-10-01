@@ -31,12 +31,12 @@
         </tbody>
     </table>
     <ul>
-        <li><a href="{{ url_for('home') }}">Home</a></li>
-        <li><a href="{{ url_for('send_picture') }}">Send Picture</a></li>
-        <li><a href="{{ url_for('my_image_packages') }}">My Image Packages</a></li>
-        <li><a href="{{ url_for('outbox') }}">Outbox</a></li>
-        <li><a href="{{ url_for('grant_access') }}">Grant Sharing Access</a></li>
-        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        <li><a href="{{ url_for('main.home') }}">Home</a></li>
+        <li><a href="{{ url_for('main.send_picture') }}">Send Picture</a></li>
+        <li><a href="{{ url_for('main.my_image_packages') }}">My Image Packages</a></li>
+        <li><a href="{{ url_for('main.outbox') }}">Outbox</a></li>
+        <li><a href="{{ url_for('main.grant_access') }}">Grant Sharing Access</a></li>
+        <li><a href="{{ url_for('main.logout') }}">Logout</a></li>
     </ul>
 </body>
 </html>

@@ -87,7 +87,7 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
     
-    
+   
 class Package(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -229,9 +229,6 @@ def home():
 
 
 
-
-
-
 @app.route('/send_picture', methods=['GET', 'POST'])
 @login_required
 def send_picture():
@@ -347,6 +344,7 @@ def share_image(image_id):
         db.session.commit()
         return redirect(url_for('send_picture'))
     return render_template('share_image.html', image=image)
+
 
 @app.route('/my_image_packages')
 @login_required
