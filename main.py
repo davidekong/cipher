@@ -115,9 +115,28 @@ class LoginForm(FlaskForm):
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
     
-    
+with app.app_context():
+    db.create_all()
+    # user5 = User(id=5, username='main', email='main@example.com', password='main1')
+    # user4 = User(id=4, username='testuser4', email='test4@example.com', password='password101112')
+    # user3 = User(id=3, username='testuser3', email='test3@example.com', password='password789')
+    # user2 = User(id=2, username='testuser2', email='test2@example.com', password='password456')
+    # user1 = User(id=1, username='testuser1', email='test1@example.com', password='password123')
 
-
+    # db.session.add(user5)
+    # db.session.add(user4)
+    # db.session.add(user3)
+    # db.session.add(user2)
+    # db.session.add(user1)
+    # db.session.commit()
+    # users = User.query.all()
+    # for user in users:
+    #     print(f"ID: {user.id}, Username: {user.username}, Email: {user.email}")
+    # num_rows_deleted = db.session.query(Image).delete()
+    # db.session.commit()
+    # images = Image.query.all()
+    # for image in images:
+    #     print(f"ID: {image.id}, Username: {image.filename}")
     
     
 @app.route("/register", methods=['GET', 'POST'])
@@ -158,6 +177,96 @@ def home():
 
 
 
+
+@app.route('/send_message', methods=['GET', 'POST'])
+@login_required
+def send_message():
+    if request.method == 'POST':
+        recipient_username = request.form['recipient_username']
+        text = request.form['text']
+        
+        recipient = User.query.filter_by(username=recipient_username).first()
+        
+        if not recipient:
+            flash('Recipient not found.', 'error')
+            return redirect(url_for('send_message'))
+        
+        # Create the Message
+        message = Message(text=text)
+        db.session.add(message)
+        db.session.commit()
+        
+        # Create the Package
+        package = Package(
+            owner_id=current_user.id,
+            sender_id=current_user.id,
+            recipient_id=recipient.id,
+            package_type='message',
+            content_id=message.id,
+            sent_at=datetime.utcnow(),
+            has_access=True
+        )
+        db.session.add(package)
+        db.session.commit()
+        
+        flash('Message sent successfully!', 'success')
+        data = {
+            "text": text,
+            "sender": current_user.username,
+            "sent_at": str(package.sent_at)
+        }
+        socketio.emit('sent', data)
+        return redirect(url_for('send_message'))
+    
+    # Retrieve messages sent to the current user
+    packages = Package.query.filter_by(recipient_id=current_user.id, package_type='message').all()
+    messages = [(pkg.sent_at, pkg.sender.username, Message.query.get(pkg.content_id).text) for pkg in packages]
+
+    
+    return render_template('send_message.html', messages=messages)
+
+
+@app.route('/send_message_main', methods=['GET', 'POST'])
+def send_message_main():
+    current_user = User.query.get(5)
+    if request.method == 'POST':
+        recipient_username = request.form['recipient_username']
+        text = request.form['text']
+        
+        recipient = User.query.filter_by(username=recipient_username).first()
+        
+        if not recipient:
+            flash('Recipient not found.', 'error')
+            return redirect(url_for('send_message'))
+        
+        # Create the Message
+        message = Message(text=text)
+        db.session.add(message)
+        db.session.commit()
+        
+        # Create the Package
+        package = Package(
+            owner_id=current_user.id,
+            sender_id=current_user.id,
+            recipient_id=recipient.id,
+            package_type='message',
+            content_id=message.id,
+            sent_at=datetime.utcnow(),
+            has_access=True
+        )
+        db.session.add(package)
+        db.session.commit()
+        
+        flash('Message sent successfully!', 'success')
+        
+        return redirect(url_for('send_message_main'))
+    
+    # Retrieve messages sent to the current user
+    packages = Package.query.filter_by(recipient_id=current_user.id, package_type='message').all()
+    messages = [(pkg.sent_at, pkg.sender.username, Message.query.get(pkg.content_id).text) for pkg in packages]
+
+    
+    return render_template('send_message.html', messages=messages)
 
 
 
